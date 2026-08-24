@@ -1,20 +1,13 @@
 from app.rag.vector_store import get_vector_store
 
 
-def calculate_relevance(distance: float) -> float:
-    """
-    Convert ChromaDB distance into a bounded relevance score.
-
-    This is a relative relevance indicator, NOT a probability
-    and NOT the final verification confidence.
-    """
-
-    return 1.0 / (1.0 + distance)
+DEFAULT_DISTANCE_THRESHOLD = 0.8
 
 
 def retrieve_evidence(
     query: str,
     k: int = 3,
+    distance_threshold: float = DEFAULT_DISTANCE_THRESHOLD,
 ):
     vector_store = get_vector_store()
 
@@ -29,12 +22,15 @@ def retrieve_evidence(
 
         distance = float(distance)
 
+        # Lower Chroma distance means higher similarity.
+        if distance > distance_threshold:
+            continue
+
         evidence.append(
             {
                 "content": document.page_content,
                 "metadata": document.metadata,
                 "distance": distance,
-                "relevance_score": calculate_relevance(distance),
             }
         )
 
