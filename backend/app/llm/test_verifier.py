@@ -2,29 +2,100 @@ from app.rag.retriever import retrieve_evidence
 from app.llm.verifier import verify_claim
 
 
+TEST_CLAIMS = [
+    {
+        "claim": "Regular physical activity provides health benefits.",
+        "expected": "TRUE",
+    },
+    {
+        "claim": "Vitamin C supplements can prevent or cure all illnesses.",
+        "expected": "FALSE",
+    },
+    {
+        "claim": "Exercise improves cardiovascular fitness and cures every disease.",
+        "expected": "PARTIALLY_TRUE",
+    },
+    {
+        "claim": "Drinking lemon water cures diabetes.",
+        "expected": "UNVERIFIED",
+    },
+]
+
+
 if __name__ == "__main__":
 
-    claim = "Drinking lemon water cures diabetes."
+    print("\n========================================")
+    print("HEALTH CLAIM VERIFICATION TEST SUITE")
+    print("========================================")
 
-    print("\nRetrieving evidence...")
+    for index, test in enumerate(TEST_CLAIMS, start=1):
 
-    evidence = retrieve_evidence(
-        claim,
-        k=2,
-    )
+        claim = test["claim"]
+        expected = test["expected"]
 
-    print(f"Evidence retrieved: {len(evidence)}")
+        print("\n----------------------------------------")
+        print(f"TEST {index}")
+        print("----------------------------------------")
 
-    print("\nSending claim and evidence to Llama...")
+        print(f"Claim: {claim}")
+        print(f"Expected: {expected}")
 
-    result = verify_claim(
-        claim,
-        evidence,
-    )
+        print("\nRetrieving evidence...")
 
-    print("\n--- VERIFICATION RESULT ---")
+        evidence = retrieve_evidence(
+            claim,
+            k=2,
+        )
 
-    print(f"Verdict: {result.get('verdict')}")
-    print(f"Confidence: {result.get('confidence')}")
-    print(f"Explanation: {result.get('explanation')}")
-    print(f"Evidence used: {result.get('evidence_used')}")
+        print(f"Evidence retrieved: {len(evidence)}")
+
+        if evidence:
+            for evidence_index, item in enumerate(evidence, start=1):
+
+                print(
+                    f"Evidence {evidence_index}: "
+                    f"{item['metadata'].get('title', 'Unknown')}"
+                )
+
+                print(
+                    f"Distance: {item['distance']:.4f}"
+                )
+
+        print("\nSending claim and evidence to Llama...")
+
+        result = verify_claim(
+            claim,
+            evidence,
+        )
+
+        verdict = result.get(
+            "verdict",
+            "UNVERIFIED"
+        )
+
+        confidence = result.get(
+            "confidence",
+            0.0
+        )
+
+        explanation = result.get(
+            "explanation",
+            ""
+        )
+
+        print("\n--- RESULT ---")
+
+        print(f"Verdict: {verdict}")
+        print(f"Confidence: {confidence}")
+        print(f"Expected: {expected}")
+
+        if verdict == expected:
+            print("Status: PASS")
+        else:
+            print("Status: FAIL")
+
+        print(f"Explanation: {explanation}")
+        print(
+            f"Evidence used: "
+            f"{result.get('evidence_used', [])}"
+        )

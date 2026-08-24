@@ -1,7 +1,7 @@
 from app.rag.vector_store import get_vector_store
 
 
-DEFAULT_DISTANCE_THRESHOLD = 0.8
+DEFAULT_DISTANCE_THRESHOLD = 1.2
 
 
 def retrieve_evidence(
