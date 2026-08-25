@@ -1,13 +1,17 @@
 Title: Physical Activity Overview
 
-Source: Development Health Reference
+Source: World Health Organization
+
+Source URL: https://www.who.int/news-room/fact-sheets/detail/physical-activity
 
 Topic: Exercise
 
-Regular physical activity provides health benefits and can help improve cardiovascular fitness.
+Regular physical activity provides significant physical and mental health benefits.
 
-Physical activity can also contribute to maintaining a healthy body weight when combined with appropriate dietary habits.
+In adults, physical activity contributes to the prevention and management of noncommunicable diseases such as cardiovascular diseases, cancer, and diabetes.
 
-Exercise is beneficial for general health, but it should not be considered a guaranteed cure for every disease.
+Physical activity can improve cardiovascular fitness and overall well-being.
 
-Source organization: Development Health Reference
+Exercise is beneficial for health, but it should not be considered a guaranteed cure for every disease.
+
+Source organization: World Health Organization

@@ -1,6 +1,7 @@
+
 Title: Diabetes Overview
 
-Source organization: World Health Organization
+Source: World Health Organization
 
 Source URL: https://www.who.int/health-topics/diabetes
 

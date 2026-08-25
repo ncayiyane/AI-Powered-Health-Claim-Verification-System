@@ -1,13 +1,17 @@
 Title: Vitamin C Overview
 
-Source: Development Health Reference
+Source: National Institutes of Health
+
+Source URL: https://ods.od.nih.gov/factsheets/VitaminC-HealthProfessional/
 
 Topic: Vitamin C
 
-Vitamin C is an essential nutrient that supports normal biological functions.
+Vitamin C is an essential dietary component and is required for several important biological functions.
 
-A balanced diet can provide vitamin C through foods such as fruits and vegetables.
+Vitamin C is naturally present in fruits and vegetables and is also available as a dietary supplement.
 
-Vitamin C is important for normal health, but this document does not establish that vitamin C supplements can prevent or cure all illnesses.
+Vitamin C plays roles in collagen production, antioxidant activity, immune function, and iron absorption.
 
-Source organization: Development Health Reference
+Evidence for vitamin C varies across different health conditions, and vitamin C supplements should not be considered a universal treatment or cure for all illnesses.
+
+Source organization: National Institutes of Health, Office of Dietary Supplements

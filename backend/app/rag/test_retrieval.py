@@ -13,7 +13,7 @@ def search_evidence(query: str, k: int = 2):
 
 
 if __name__ == "__main__":
-    query = "Can drinking lemon water cure diabetes?"
+    query = "Diabetes is a chronic disease."
 
     results = search_evidence(query)
 
