@@ -10,7 +10,9 @@ function App() {
   const [error, setError] = useState("");
 
   const verifyClaim = async () => {
-    if (!claim.trim()) {
+    const trimmedClaim = claim.trim();
+
+    if (!trimmedClaim) {
       setError("Please enter a health claim to verify.");
       return;
     }
@@ -26,7 +28,7 @@ function App() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          claim: claim.trim(),
+          claim: trimmedClaim,
         }),
       });
 
@@ -37,7 +39,8 @@ function App() {
       const data = await response.json();
       setResult(data);
     } catch (err) {
-      console.error(err);
+      console.error("Verification error:", err);
+
       setError(
         "Unable to verify the claim. Please make sure the FastAPI backend is running."
       );
@@ -51,36 +54,93 @@ function App() {
     verifyClaim();
   };
 
+  const handleExampleClick = (example) => {
+    setClaim(example);
+    setError("");
+    setResult(null);
+  };
+
   const getVerdictClass = (verdict) => {
     switch (verdict) {
       case "TRUE":
-        return "verdict true";
+        return "verdict-card verdict-true";
 
       case "FALSE":
-        return "verdict false";
+        return "verdict-card verdict-false";
 
       case "PARTIALLY_TRUE":
-        return "verdict partial";
+        return "verdict-card verdict-partial";
 
       default:
-        return "verdict unverified";
+        return "verdict-card verdict-unverified";
+    }
+  };
+
+  const getVerdictIcon = (verdict) => {
+    switch (verdict) {
+      case "TRUE":
+        return "✓";
+
+      case "FALSE":
+        return "×";
+
+      case "PARTIALLY_TRUE":
+        return "◐";
+
+      default:
+        return "?";
     }
   };
 
   const formatVerdict = (verdict) => {
     if (verdict === "PARTIALLY_TRUE") {
-      return "PARTIALLY TRUE";
+      return "Partially True";
     }
 
-    return verdict;
+    if (verdict === "TRUE") {
+      return "True";
+    }
+
+    if (verdict === "FALSE") {
+      return "False";
+    }
+
+    return "Unverified";
+  };
+
+  const getConfidenceLabel = (confidence) => {
+    if (confidence >= 0.8) {
+      return "High confidence";
+    }
+
+    if (confidence >= 0.5) {
+      return "Moderate confidence";
+    }
+
+    return "Low confidence";
+  };
+
+  const getConfidenceClass = (confidence) => {
+    if (confidence >= 0.8) {
+      return "confidence-high";
+    }
+
+    if (confidence >= 0.5) {
+      return "confidence-moderate";
+    }
+
+    return "confidence-low";
   };
 
   return (
     <div className="app">
+      {/* Header */}
       <header className="header">
         <div className="header-content">
           <div className="logo">
-            <div className="logo-icon">✚</div>
+            <div className="logo-icon" aria-hidden="true">
+              +
+            </div>
 
             <div>
               <h1>HealthVerify AI</h1>
@@ -88,71 +148,150 @@ function App() {
             </div>
           </div>
 
-          <div className="status">
+          <div className="system-status">
             <span className="status-dot"></span>
-            System Online
+            <span>System Online</span>
           </div>
         </div>
       </header>
 
       <main className="main">
+        {/* Hero */}
         <section className="hero">
-          <span className="badge">AI HEALTH VERIFICATION</span>
+          <div className="hero-badge">
+            <span className="badge-dot"></span>
+            AI HEALTH VERIFICATION
+          </div>
 
           <h2>
-            Verify health claims with
-            <span> trusted evidence.</span>
+            Verify health claims with{" "}
+            <span>trusted evidence.</span>
           </h2>
 
           <p>
-            Enter a health-related claim and our AI system will analyze
-            trusted sources to determine whether the claim is true,
+            Enter a health-related claim and our AI system will compare it
+            against retrieved evidence to determine whether it is true,
             false, partially true, or currently unverified.
           </p>
         </section>
 
+        {/* Verification Form */}
         <section className="verification-card">
+          <div className="card-header">
+            <div>
+              <span className="card-eyebrow">CLAIM CHECKER</span>
+              <h3>What would you like to verify?</h3>
+            </div>
+
+            <div className="ai-badge">
+              <span>AI</span>
+              Evidence-based
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit}>
             <label htmlFor="claim">Health claim</label>
 
             <textarea
               id="claim"
               value={claim}
-              onChange={(event) => setClaim(event.target.value)}
+              onChange={(event) => {
+                setClaim(event.target.value);
+                if (error) {
+                  setError("");
+                }
+              }}
               placeholder="Example: Drinking lemon water cures diabetes."
               maxLength={1000}
               disabled={loading}
+              aria-describedby="claim-counter"
             />
 
             <div className="input-footer">
-              <span>{claim.length}/1000</span>
+              <span id="claim-counter">
+                {claim.length}/1000 characters
+              </span>
 
-              <button type="submit" disabled={loading}>
+              <button
+                type="submit"
+                disabled={loading || !claim.trim()}
+                className="verify-button"
+              >
                 {loading ? (
                   <>
                     <span className="spinner"></span>
-                    Analyzing...
+                    Analyzing claim...
                   </>
                 ) : (
                   <>
                     Verify Claim
-                    <span>→</span>
+                    <span className="button-arrow" aria-hidden="true">
+                      →
+                    </span>
                   </>
                 )}
               </button>
             </div>
           </form>
 
+          <div className="examples">
+            <span>Try an example:</span>
+
+            <button
+              type="button"
+              className="example-button"
+              onClick={() =>
+                handleExampleClick(
+                  "Regular physical activity provides health benefits."
+                )
+              }
+              disabled={loading}
+            >
+              Physical activity
+            </button>
+
+            <button
+              type="button"
+              className="example-button"
+              onClick={() =>
+                handleExampleClick(
+                  "Vitamin C supplements can prevent or cure all illnesses."
+                )
+              }
+              disabled={loading}
+            >
+              Vitamin C
+            </button>
+
+            <button
+              type="button"
+              className="example-button"
+              onClick={() =>
+                handleExampleClick(
+                  "Drinking lemon water cures diabetes."
+                )
+              }
+              disabled={loading}
+            >
+              Lemon water
+            </button>
+          </div>
+
           {error && (
-            <div className="error-message">
-              <strong>Verification failed</strong>
-              <p>{error}</p>
+            <div className="error-message" role="alert">
+              <div className="error-icon">!</div>
+
+              <div>
+                <strong>Verification failed</strong>
+                <p>{error}</p>
+              </div>
             </div>
           )}
         </section>
 
+        {/* Results */}
         {result && (
-          <section className="results">
+          <section className="results" aria-live="polite">
             <div className="results-header">
               <div>
                 <span className="section-label">VERIFICATION RESULT</span>
@@ -160,24 +299,52 @@ function App() {
               </div>
 
               <div className={getVerdictClass(result.verdict)}>
-                {formatVerdict(result.verdict)}
+                <div className="verdict-icon">
+                  {getVerdictIcon(result.verdict)}
+                </div>
+
+                <div>
+                  <span className="verdict-label">VERDICT</span>
+                  <strong>{formatVerdict(result.verdict)}</strong>
+                </div>
               </div>
             </div>
 
+            {/* Claim */}
             <div className="claim-display">
-              <span>CLAIM</span>
+              <div className="claim-label">
+                <span>CLAIM</span>
+              </div>
+
               <p>"{result.claim}"</p>
             </div>
 
+            {/* Main analysis */}
             <div className="result-grid">
-              <div className="result-panel">
-                <span className="panel-label">CONFIDENCE</span>
+              <div className="result-panel confidence-panel">
+                <div className="panel-heading">
+                  <span className="panel-label">CONFIDENCE</span>
 
-                <div className="confidence-value">
-                  {Math.round(result.confidence * 100)}%
+                  <span
+                    className={`confidence-status ${getConfidenceClass(
+                      result.confidence
+                    )}`}
+                  >
+                    {getConfidenceLabel(result.confidence)}
+                  </span>
                 </div>
 
-                <div className="confidence-bar">
+                <div className="confidence-value">
+                  {Math.round(result.confidence * 100)}
+                  <span>%</span>
+                </div>
+
+                <div
+                  className="confidence-bar"
+                  aria-label={`Confidence ${Math.round(
+                    result.confidence * 100
+                  )}%`}
+                >
                   <div
                     className="confidence-fill"
                     style={{
@@ -187,7 +354,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="result-panel">
+              <div className="result-panel explanation-panel">
                 <span className="panel-label">EXPLANATION</span>
 
                 <p className="explanation">
@@ -196,54 +363,81 @@ function App() {
               </div>
             </div>
 
+            {/* Evidence */}
             <div className="evidence-section">
               <div className="evidence-heading">
                 <div>
-                  <span className="section-label">SUPPORTING EVIDENCE</span>
+                  <span className="section-label">
+                    SUPPORTING EVIDENCE
+                  </span>
+
                   <h3>Retrieved sources</h3>
                 </div>
 
-                <span className="evidence-count">
-                  {result.evidence.length} source
-                  {result.evidence.length !== 1 ? "s" : ""}
-                </span>
+                <div className="evidence-count">
+                  <span>{result.evidence.length}</span>
+                  {result.evidence.length === 1 ? " source" : " sources"}
+                </div>
               </div>
 
               {result.evidence.length === 0 ? (
                 <div className="no-evidence">
-                  No supporting evidence was retrieved.
+                  <div className="no-evidence-icon">?</div>
+
+                  <div>
+                    <strong>No supporting evidence found</strong>
+                    <p>
+                      The system could not retrieve relevant supporting
+                      sources for this claim.
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="evidence-list">
                   {result.evidence.map((item, index) => (
-                    <article className="evidence-card" key={index}>
+                    <article
+                      className="evidence-card"
+                      key={`${item.title}-${index}`}
+                    >
                       <div className="evidence-top">
-                        <div>
-                          <span className="evidence-number">
-                            EVIDENCE {index + 1}
-                          </span>
+                        <div className="evidence-title-group">
+                          <div className="evidence-number">
+                            EVIDENCE {String(index + 1).padStart(2, "0")}
+                          </div>
 
                           <h4>{item.title}</h4>
                         </div>
 
-                        <span className="relevance">
-                          {Math.round(item.relevance_score * 100)}% relevant
-                        </span>
+                        <div className="relevance">
+                          <span>
+                            {Math.round(item.relevance_score * 100)}%
+                          </span>
+                          relevant
+                        </div>
                       </div>
 
                       <div className="source">
-                        <strong>Source:</strong> {item.source}
+                        <span className="source-icon">✓</span>
+
+                        <div>
+                          <span className="source-label">SOURCE</span>
+                          <strong>{item.source}</strong>
+                        </div>
                       </div>
 
-                      <p>{item.snippet}</p>
+                      <div className="evidence-snippet">
+                        {item.snippet}
+                      </div>
 
                       {item.url && (
                         <a
                           href={item.url}
                           target="_blank"
                           rel="noopener noreferrer"
+                          className="source-link"
                         >
-                          View source →
+                          View official source
+                          <span aria-hidden="true">↗</span>
                         </a>
                       )}
                     </article>
@@ -254,26 +448,30 @@ function App() {
           </section>
         )}
 
+        {/* Disclaimer */}
         <section className="info-section">
+          <div className="info-icon" aria-hidden="true">
+            ✓
+          </div>
+
           <div>
-            <span className="info-icon">✓</span>
+            <h3>Evidence-based verification</h3>
 
-            <div>
-              <h3>Evidence-based verification</h3>
-
-              <p>
-                Results are generated using retrieved evidence and an
-                AI language model. The system does not replace advice
-                from qualified healthcare professionals.
-              </p>
-            </div>
+            <p>
+              Results are generated by comparing your claim with retrieved
+              evidence and an AI language model. HealthVerify AI is an
+              informational tool and does not replace advice, diagnosis,
+              or treatment from a qualified healthcare professional.
+            </p>
           </div>
         </section>
       </main>
 
       <footer>
         <p>
-          HealthVerify AI · AI-Powered Health Claim Verification System
+          HealthVerify AI
+          <span>•</span>
+          AI-Powered Health Claim Verification System
         </p>
       </footer>
     </div>
