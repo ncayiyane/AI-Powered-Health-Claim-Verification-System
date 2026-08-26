@@ -1,11 +1,14 @@
 import { useState } from "react";
 import "./App.css";
 
-const API_URL = "http://127.0.0.1:8000/api/v1/claims/verify";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://127.0.0.1:8000/api/v1/claims/verify";
 
 function App() {
   const [claim, setClaim] = useState("");
   const [result, setResult] = useState(null);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,7 +40,16 @@ function App() {
       }
 
       const data = await response.json();
+
       setResult(data);
+
+      setHistory((previousHistory) => [
+        {
+          ...data,
+          checkedAt: new Date().toISOString(),
+        },
+        ...previousHistory,
+      ].slice(0, 5));
     } catch (err) {
       console.error("Verification error:", err);
 
@@ -58,6 +70,12 @@ function App() {
     setClaim(example);
     setError("");
     setResult(null);
+  };
+
+  const handleHistoryClick = (item) => {
+    setClaim(item.claim);
+    setResult(item);
+    setError("");
   };
 
   const getVerdictClass = (verdict) => {
@@ -132,6 +150,22 @@ function App() {
     return "confidence-low";
   };
 
+  const getHistoryVerdictClass = (verdict) => {
+    switch (verdict) {
+      case "TRUE":
+        return "history-verdict history-true";
+
+      case "FALSE":
+        return "history-verdict history-false";
+
+      case "PARTIALLY_TRUE":
+        return "history-verdict history-partially-true";
+
+      default:
+        return "history-verdict history-unverified";
+    }
+  };
+
   return (
     <div className="app">
       {/* Header */}
@@ -197,6 +231,7 @@ function App() {
               value={claim}
               onChange={(event) => {
                 setClaim(event.target.value);
+
                 if (error) {
                   setError("");
                 }
@@ -234,6 +269,7 @@ function App() {
             </div>
           </form>
 
+          {/* Example Claims */}
           <div className="examples">
             <span>Try an example:</span>
 
@@ -277,6 +313,7 @@ function App() {
             </button>
           </div>
 
+          {/* Error */}
           {error && (
             <div className="error-message" role="alert">
               <div className="error-icon">!</div>
@@ -319,7 +356,7 @@ function App() {
               <p>"{result.claim}"</p>
             </div>
 
-            {/* Main analysis */}
+            {/* Analysis */}
             <div className="result-grid">
               <div className="result-panel confidence-panel">
                 <div className="panel-heading">
@@ -386,6 +423,7 @@ function App() {
 
                   <div>
                     <strong>No supporting evidence found</strong>
+
                     <p>
                       The system could not retrieve relevant supporting
                       sources for this claim.
@@ -448,6 +486,55 @@ function App() {
           </section>
         )}
 
+        {/* Recent Verification History */}
+        {history.length > 0 && (
+          <section className="history-section">
+            <div className="history-heading">
+              <div>
+                <span className="section-label">RECENT ACTIVITY</span>
+
+                <h3>Recent verifications</h3>
+              </div>
+
+              <button
+                type="button"
+                className="clear-history"
+                onClick={() => setHistory([])}
+              >
+                Clear history
+              </button>
+            </div>
+
+            <div className="history-list">
+              {history.map((item, index) => (
+                <button
+                  type="button"
+                  className="history-item"
+                  key={`${item.claim}-${index}`}
+                  onClick={() => handleHistoryClick(item)}
+                >
+                  <div className="history-main">
+                    <span className="history-claim">
+                      {item.claim}
+                    </span>
+
+                    <span className="history-time">
+                      {new Date(item.checkedAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+
+                  <div className={getHistoryVerdictClass(item.verdict)}>
+                    {formatVerdict(item.verdict)}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Disclaimer */}
         <section className="info-section">
           <div className="info-icon" aria-hidden="true">
@@ -467,6 +554,7 @@ function App() {
         </section>
       </main>
 
+      {/* Footer */}
       <footer>
         <p>
           HealthVerify AI
