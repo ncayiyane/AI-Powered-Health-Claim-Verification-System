@@ -1,9 +1,17 @@
+
 import { useState } from "react";
 import "./App.css";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
   "http://127.0.0.1:8000/api/v1/claims/verify";
+
+const EXAMPLE_CLAIMS = [
+  "Regular physical activity provides health benefits.",
+  "Vitamin C supplements can prevent or cure all illnesses.",
+  "Exercise improves cardiovascular fitness and cures every disease.",
+  "Drinking lemon water cures diabetes.",
+];
 
 function App() {
   const [claim, setClaim] = useState("");
@@ -41,14 +49,19 @@ function App() {
 
       const data = await response.json();
 
-      setResult(data);
+      const verificationResult = {
+        ...data,
+        claim: data.claim || trimmedClaim,
+        checkedAt: new Date().toISOString(),
+      };
+
+      setResult(verificationResult);
 
       setHistory((previousHistory) => [
-        {
-          ...data,
-          checkedAt: new Date().toISOString(),
-        },
-        ...previousHistory,
+        verificationResult,
+        ...previousHistory.filter(
+          (item) => item.claim !== verificationResult.claim
+        ),
       ].slice(0, 5));
     } catch (err) {
       console.error("Verification error:", err);
@@ -73,9 +86,13 @@ function App() {
   };
 
   const handleHistoryClick = (item) => {
-    setClaim(item.claim);
+    setClaim(item.claim || "");
     setResult(item);
     setError("");
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
   };
 
   const getVerdictClass = (verdict) => {
@@ -100,7 +117,7 @@ function App() {
         return "✓";
 
       case "FALSE":
-        return "×";
+        return "✕";
 
       case "PARTIALLY_TRUE":
         return "◐";
@@ -110,457 +127,397 @@ function App() {
     }
   };
 
-  const formatVerdict = (verdict) => {
-    if (verdict === "PARTIALLY_TRUE") {
-      return "Partially True";
-    }
+  const getVerdictLabel = (verdict) => {
+    switch (verdict) {
+      case "TRUE":
+        return "TRUE";
 
-    if (verdict === "TRUE") {
-      return "True";
-    }
+      case "FALSE":
+        return "FALSE";
 
-    if (verdict === "FALSE") {
-      return "False";
-    }
+      case "PARTIALLY_TRUE":
+        return "PARTIALLY TRUE";
 
-    return "Unverified";
+      default:
+        return "UNVERIFIED";
+    }
   };
 
   const getConfidenceLabel = (confidence) => {
-    if (confidence >= 0.8) {
+    const value = Number(confidence || 0);
+
+    if (value >= 0.8) {
       return "High confidence";
     }
 
-    if (confidence >= 0.5) {
+    if (value >= 0.5) {
       return "Moderate confidence";
     }
 
     return "Low confidence";
   };
 
-  const getConfidenceClass = (confidence) => {
-    if (confidence >= 0.8) {
-      return "confidence-high";
-    }
+  const formatConfidence = (confidence) => {
+    const value = Number(confidence || 0);
 
-    if (confidence >= 0.5) {
-      return "confidence-moderate";
-    }
-
-    return "confidence-low";
+    return `${Math.round(value * 100)}%`;
   };
 
-  const getHistoryVerdictClass = (verdict) => {
-    switch (verdict) {
-      case "TRUE":
-        return "history-verdict history-true";
+  const formatDate = (dateString) => {
+    if (!dateString) {
+      return "";
+    }
 
-      case "FALSE":
-        return "history-verdict history-false";
-
-      case "PARTIALLY_TRUE":
-        return "history-verdict history-partially-true";
-
-      default:
-        return "history-verdict history-unverified";
+    try {
+      return new Date(dateString).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "";
     }
   };
+
+  const evidence = Array.isArray(result?.evidence)
+    ? result.evidence
+    : Array.isArray(result?.supporting_evidence)
+      ? result.supporting_evidence
+      : [];
 
   return (
     <div className="app">
-      {/* Header */}
       <header className="header">
         <div className="header-content">
           <div className="logo">
-            <div className="logo-icon" aria-hidden="true">
-              +
-            </div>
+            <div className="logo-icon">✓</div>
 
             <div>
               <h1>HealthVerify AI</h1>
-              <p>AI-Powered Health Claim Verification</p>
+              <p>Evidence-based health claim verification</p>
             </div>
           </div>
 
-          <div className="system-status">
+          <div className="status">
             <span className="status-dot"></span>
-            <span>System Online</span>
+            <span>System online</span>
           </div>
         </div>
       </header>
 
       <main className="main">
-        {/* Hero */}
         <section className="hero">
-          <div className="hero-badge">
-            <span className="badge-dot"></span>
-            AI HEALTH VERIFICATION
-          </div>
+          <div className="badge">AI-POWERED VERIFICATION</div>
 
           <h2>
-            Verify health claims with{" "}
-            <span>trusted evidence.</span>
+            Verify health claims with
+            <br />
+            <span>evidence.</span>
           </h2>
 
           <p>
-            Enter a health-related claim and our AI system will compare it
-            against retrieved evidence to determine whether it is true,
-            false, partially true, or currently unverified.
+            Submit a health-related claim and our system will retrieve relevant
+            evidence from trusted sources before generating an evidence-based
+            verification result.
           </p>
         </section>
 
-        {/* Verification Form */}
         <section className="verification-card">
-          <div className="card-header">
-            <div>
-              <span className="card-eyebrow">CLAIM CHECKER</span>
-              <h3>What would you like to verify?</h3>
-            </div>
-
-            <div className="ai-badge">
-              <span>AI</span>
-              Evidence-based
-            </div>
-          </div>
-
           <form onSubmit={handleSubmit}>
-            <label htmlFor="claim">Health claim</label>
+            <label htmlFor="claim">
+              Enter a health claim
+            </label>
 
             <textarea
               id="claim"
               value={claim}
-              onChange={(event) => {
-                setClaim(event.target.value);
-
-                if (error) {
-                  setError("");
-                }
-              }}
-              placeholder="Example: Drinking lemon water cures diabetes."
-              maxLength={1000}
+              onChange={(event) => setClaim(event.target.value)}
+              placeholder="Example: Regular physical activity provides health benefits."
               disabled={loading}
-              aria-describedby="claim-counter"
             />
 
             <div className="input-footer">
-              <span id="claim-counter">
-                {claim.length}/1000 characters
-              </span>
+              <span>{claim.length} characters</span>
 
-              <button
-                type="submit"
-                disabled={loading || !claim.trim()}
-                className="verify-button"
-              >
+              <button type="submit" disabled={loading}>
                 {loading ? (
                   <>
                     <span className="spinner"></span>
-                    Analyzing claim...
+                    Verifying...
                   </>
                 ) : (
                   <>
-                    Verify Claim
-                    <span className="button-arrow" aria-hidden="true">
-                      →
-                    </span>
+                    Verify claim
+                    <span>→</span>
                   </>
                 )}
               </button>
             </div>
           </form>
 
-          {/* Example Claims */}
-          <div className="examples">
-            <span>Try an example:</span>
+          <div className="examples-section">
+            <span className="examples-label">TRY AN EXAMPLE</span>
 
-            <button
-              type="button"
-              className="example-button"
-              onClick={() =>
-                handleExampleClick(
-                  "Regular physical activity provides health benefits."
-                )
-              }
-              disabled={loading}
-            >
-              Physical activity
-            </button>
-
-            <button
-              type="button"
-              className="example-button"
-              onClick={() =>
-                handleExampleClick(
-                  "Vitamin C supplements can prevent or cure all illnesses."
-                )
-              }
-              disabled={loading}
-            >
-              Vitamin C
-            </button>
-
-            <button
-              type="button"
-              className="example-button"
-              onClick={() =>
-                handleExampleClick(
-                  "Drinking lemon water cures diabetes."
-                )
-              }
-              disabled={loading}
-            >
-              Lemon water
-            </button>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="error-message" role="alert">
-              <div className="error-icon">!</div>
-
-              <div>
-                <strong>Verification failed</strong>
-                <p>{error}</p>
-              </div>
+            <div className="examples-list">
+              {EXAMPLE_CLAIMS.map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  className="example-button"
+                  onClick={() => handleExampleClick(example)}
+                  disabled={loading}
+                >
+                  {example}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
         </section>
 
-        {/* Results */}
+        {error && (
+          <div className="error-message">
+            <strong>Verification failed</strong>
+            <p>{error}</p>
+          </div>
+        )}
+
         {result && (
-          <section className="results" aria-live="polite">
+          <section className="results">
             <div className="results-header">
               <div>
-                <span className="section-label">VERIFICATION RESULT</span>
+                <div className="section-label">VERIFICATION RESULT</div>
                 <h3>Your claim analysis</h3>
               </div>
 
               <div className={getVerdictClass(result.verdict)}>
-                <div className="verdict-icon">
+                <span className="verdict-icon">
                   {getVerdictIcon(result.verdict)}
-                </div>
+                </span>
 
-                <div>
-                  <span className="verdict-label">VERDICT</span>
-                  <strong>{formatVerdict(result.verdict)}</strong>
-                </div>
+                <span>
+                  {getVerdictLabel(result.verdict)}
+                </span>
               </div>
             </div>
 
-            {/* Claim */}
             <div className="claim-display">
-              <div className="claim-label">
-                <span>CLAIM</span>
-              </div>
-
-              <p>"{result.claim}"</p>
+              <span>CLAIM</span>
+              <p>{result.claim || claim}</p>
             </div>
 
-            {/* Analysis */}
             <div className="result-grid">
-              <div className="result-panel confidence-panel">
-                <div className="panel-heading">
-                  <span className="panel-label">CONFIDENCE</span>
-
-                  <span
-                    className={`confidence-status ${getConfidenceClass(
-                      result.confidence
-                    )}`}
-                  >
-                    {getConfidenceLabel(result.confidence)}
-                  </span>
-                </div>
+              <div className="result-panel">
+                <div className="panel-label">CONFIDENCE</div>
 
                 <div className="confidence-value">
-                  {Math.round(result.confidence * 100)}
-                  <span>%</span>
+                  {formatConfidence(result.confidence)}
                 </div>
 
-                <div
-                  className="confidence-bar"
-                  aria-label={`Confidence ${Math.round(
-                    result.confidence * 100
-                  )}%`}
-                >
+                <div className="confidence-bar">
                   <div
                     className="confidence-fill"
                     style={{
-                      width: `${Math.round(result.confidence * 100)}%`,
+                      width: formatConfidence(result.confidence),
                     }}
                   ></div>
                 </div>
-              </div>
-
-              <div className="result-panel explanation-panel">
-                <span className="panel-label">EXPLANATION</span>
 
                 <p className="explanation">
-                  {result.explanation}
+                  {getConfidenceLabel(result.confidence)}
+                </p>
+              </div>
+
+              <div className="result-panel">
+                <div className="panel-label">EXPLANATION</div>
+
+                <p className="explanation">
+                  {result.explanation ||
+                    "No explanation was provided by the verification system."}
                 </p>
               </div>
             </div>
 
-            {/* Evidence */}
             <div className="evidence-section">
               <div className="evidence-heading">
                 <div>
-                  <span className="section-label">
+                  <div className="section-label">
                     SUPPORTING EVIDENCE
-                  </span>
+                  </div>
 
                   <h3>Retrieved sources</h3>
                 </div>
 
-                <div className="evidence-count">
-                  <span>{result.evidence.length}</span>
-                  {result.evidence.length === 1 ? " source" : " sources"}
-                </div>
+                <span className="evidence-count">
+                  {evidence.length}{" "}
+                  {evidence.length === 1 ? "source" : "sources"}
+                </span>
               </div>
 
-              {result.evidence.length === 0 ? (
-                <div className="no-evidence">
-                  <div className="no-evidence-icon">?</div>
-
-                  <div>
-                    <strong>No supporting evidence found</strong>
-
-                    <p>
-                      The system could not retrieve relevant supporting
-                      sources for this claim.
-                    </p>
-                  </div>
-                </div>
-              ) : (
+              {evidence.length > 0 ? (
                 <div className="evidence-list">
-                  {result.evidence.map((item, index) => (
-                    <article
-                      className="evidence-card"
-                      key={`${item.title}-${index}`}
-                    >
-                      <div className="evidence-top">
-                        <div className="evidence-title-group">
-                          <div className="evidence-number">
-                            EVIDENCE {String(index + 1).padStart(2, "0")}
+                  {evidence.map((item, index) => {
+                    const metadata = item.metadata || {};
+
+                    const title =
+                      item.title ||
+                      metadata.title ||
+                      metadata.source_file ||
+                      `Evidence ${index + 1}`;
+
+                    const source =
+                      item.source ||
+                      metadata.source ||
+                      metadata.source_organization ||
+                      "Unknown source";
+
+                    const content =
+                      item.content ||
+                      item.text ||
+                      metadata.content ||
+                      "No evidence content available.";
+
+                    const sourceUrl =
+                      item.source_url ||
+                      metadata.source_url ||
+                      metadata.url ||
+                      "";
+
+                    const relevanceValue =
+                      item.relevance_score ??
+                      item.relevance ??
+                      metadata.relevance_score ??
+                      null;
+
+                    const relevance =
+                      relevanceValue !== null
+                        ? `${Math.round(Number(relevanceValue) * 100)}%`
+                        : null;
+
+                    const evidenceNumber = String(index + 1).padStart(
+                      2,
+                      "0"
+                    );
+
+                    return (
+                      <article
+                        className="evidence-card"
+                        key={`${title}-${index}`}
+                      >
+                        <div className="evidence-top">
+                          <div>
+                            <div className="evidence-number">
+                              EVIDENCE {evidenceNumber}
+                            </div>
+
+                            <h4>{title}</h4>
                           </div>
 
-                          <h4>{item.title}</h4>
+                          {relevance && (
+                            <div className="relevance">
+                              {relevance} relevant
+                            </div>
+                          )}
                         </div>
 
-                        <div className="relevance">
-                          <span>
-                            {Math.round(item.relevance_score * 100)}%
-                          </span>
-                          relevant
+                        <div className="source">
+                          <strong>SOURCE</strong> {source}
                         </div>
-                      </div>
 
-                      <div className="source">
-                        <span className="source-icon">✓</span>
+                        <p>{content}</p>
 
-                        <div>
-                          <span className="source-label">SOURCE</span>
-                          <strong>{item.source}</strong>
-                        </div>
-                      </div>
-
-                      <div className="evidence-snippet">
-                        {item.snippet}
-                      </div>
-
-                      {item.url && (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="source-link"
-                        >
-                          View official source
-                          <span aria-hidden="true">↗</span>
-                        </a>
-                      )}
-                    </article>
-                  ))}
+                        {sourceUrl && (
+                          <a
+                            href={sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            View official source ↗
+                          </a>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="no-evidence">
+                  No supporting evidence was retrieved for this claim.
                 </div>
               )}
             </div>
           </section>
         )}
 
-        {/* Recent Verification History */}
         {history.length > 0 && (
           <section className="history-section">
             <div className="history-heading">
               <div>
-                <span className="section-label">RECENT ACTIVITY</span>
-
+                <div className="section-label">RECENT ACTIVITY</div>
                 <h3>Recent verifications</h3>
               </div>
 
               <button
                 type="button"
                 className="clear-history"
-                onClick={() => setHistory([])}
+                onClick={clearHistory}
               >
                 Clear history
               </button>
             </div>
 
             <div className="history-list">
-              {history.map((item, index) => (
-                <button
-                  type="button"
-                  className="history-item"
-                  key={`${item.claim}-${index}`}
-                  onClick={() => handleHistoryClick(item)}
-                >
-                  <div className="history-main">
-                    <span className="history-claim">
-                      {item.claim}
+              {history.map((item, index) => {
+                const verdict = item.verdict || "UNVERIFIED";
+
+                return (
+                  <button
+                    type="button"
+                    className="history-item"
+                    key={`${item.claim}-${index}`}
+                    onClick={() => handleHistoryClick(item)}
+                  >
+                    <span className="history-main">
+                      <span className="history-claim">
+                        {item.claim}
+                      </span>
+
+                      <span className="history-time">
+                        {formatDate(item.checkedAt)}
+                      </span>
                     </span>
 
-                    <span className="history-time">
-                      {new Date(item.checkedAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <span
+                      className={`history-verdict history-${verdict
+                        .toLowerCase()
+                        .replace("_", "-")}`}
+                    >
+                      {getVerdictLabel(verdict)}
                     </span>
-                  </div>
-
-                  <div className={getHistoryVerdictClass(item.verdict)}>
-                    {formatVerdict(item.verdict)}
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </section>
         )}
 
-        {/* Disclaimer */}
         <section className="info-section">
-          <div className="info-icon" aria-hidden="true">
-            ✓
-          </div>
-
           <div>
-            <h3>Evidence-based verification</h3>
+            <div className="info-icon">✓</div>
 
-            <p>
-              Results are generated by comparing your claim with retrieved
-              evidence and an AI language model. HealthVerify AI is an
-              informational tool and does not replace advice, diagnosis,
-              or treatment from a qualified healthcare professional.
-            </p>
+            <div>
+              <h3>Evidence-based verification</h3>
+
+              <p>
+                Results are generated by comparing your claim with retrieved
+                evidence and an AI language model. HealthVerify AI is an
+                informational tool and does not replace advice, diagnosis, or
+                treatment from a qualified healthcare professional.
+              </p>
+            </div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
       <footer>
-        <p>
-          HealthVerify AI
-          <span>•</span>
-          AI-Powered Health Claim Verification System
-        </p>
+        HealthVerify AI · AI-Powered Health Claim Verification System
       </footer>
     </div>
   );

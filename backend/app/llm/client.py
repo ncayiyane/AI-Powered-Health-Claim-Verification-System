@@ -1,22 +1,59 @@
+import os
 
 import requests
+from dotenv import load_dotenv
 
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "llama3.1:8b"
+# Load environment variables from backend/.env
+load_dotenv()
 
-# Ollama can take longer when running an 8B model entirely on CPU.
-# Keep the connection timeout short, but allow plenty of time for generation.
-CONNECT_TIMEOUT = 10
-READ_TIMEOUT = 300
+
+OLLAMA_URL = os.getenv(
+    "OLLAMA_URL",
+    "http://localhost:11434/api/generate",
+)
+
+MODEL_NAME = os.getenv(
+    "OLLAMA_MODEL",
+    "llama3.1:8b",
+)
+
+
+def get_timeout(name: str, default: int) -> int:
+    """
+    Read an integer timeout from an environment variable.
+
+    Falls back to the default value if the environment variable
+    is missing or contains an invalid value.
+    """
+
+    try:
+        value = int(os.getenv(name, str(default)))
+
+        if value <= 0:
+            raise ValueError
+
+        return value
+
+    except (TypeError, ValueError):
+        return default
+
+
+CONNECT_TIMEOUT = get_timeout(
+    "OLLAMA_CONNECT_TIMEOUT",
+    10,
+)
+
+READ_TIMEOUT = get_timeout(
+    "OLLAMA_READ_TIMEOUT",
+    300,
+)
 
 
 def generate_response(prompt: str) -> str:
     """
     Send a prompt to the local Ollama model and return
     the generated JSON response.
-
-    The model runs locally through Ollama.
     """
 
     try:
@@ -31,7 +68,10 @@ def generate_response(prompt: str) -> str:
                     "temperature": 0,
                 },
             },
-            timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+            timeout=(
+                CONNECT_TIMEOUT,
+                READ_TIMEOUT,
+            ),
         )
 
         response.raise_for_status()
@@ -59,7 +99,17 @@ def generate_response(prompt: str) -> str:
             f"Ollama returned an HTTP error: {exc}"
         ) from exc
 
-    data = response.json()
+    except requests.exceptions.RequestException as exc:
+        raise RuntimeError(
+            f"Ollama request failed: {exc}"
+        ) from exc
+
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise RuntimeError(
+            "Ollama returned an invalid JSON response."
+        ) from exc
 
     generated_response = data.get("response")
 
