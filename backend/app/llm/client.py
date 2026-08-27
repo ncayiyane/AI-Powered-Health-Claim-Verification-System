@@ -8,12 +8,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+LLM_PROVIDER = os.getenv(
+    "LLM_PROVIDER",
+    "ollama",
+).strip().lower()
+
+
 OLLAMA_URL = os.getenv(
     "OLLAMA_URL",
     "http://localhost:11434/api/generate",
 )
 
-MODEL_NAME = os.getenv(
+OLLAMA_MODEL = os.getenv(
     "OLLAMA_MODEL",
     "llama3.1:8b",
 )
@@ -28,7 +34,12 @@ def get_timeout(name: str, default: int) -> int:
     """
 
     try:
-        value = int(os.getenv(name, str(default)))
+        value = int(
+            os.getenv(
+                name,
+                str(default),
+            )
+        )
 
         if value <= 0:
             raise ValueError
@@ -50,17 +61,16 @@ READ_TIMEOUT = get_timeout(
 )
 
 
-def generate_response(prompt: str) -> str:
+def _generate_with_ollama(prompt: str) -> str:
     """
-    Send a prompt to the local Ollama model and return
-    the generated JSON response.
+    Generate a response using the local Ollama server.
     """
 
     try:
         response = requests.post(
             OLLAMA_URL,
             json={
-                "model": MODEL_NAME,
+                "model": OLLAMA_MODEL,
                 "prompt": prompt,
                 "stream": False,
                 "format": "json",
@@ -106,6 +116,7 @@ def generate_response(prompt: str) -> str:
 
     try:
         data = response.json()
+
     except ValueError as exc:
         raise RuntimeError(
             "Ollama returned an invalid JSON response."
@@ -119,3 +130,22 @@ def generate_response(prompt: str) -> str:
         )
 
     return generated_response
+
+
+def generate_response(prompt: str) -> str:
+    """
+    Generate an LLM response using the configured provider.
+
+    Currently supported:
+        - ollama
+
+    Additional cloud providers can be added later without changing
+    the verification pipeline.
+    """
+
+    if LLM_PROVIDER == "ollama":
+        return _generate_with_ollama(prompt)
+
+    raise RuntimeError(
+        f"Unsupported LLM provider: {LLM_PROVIDER}"
+    )
