@@ -261,8 +261,8 @@ Drinking lemon water cures diabetes.
 ### Result
 
 ```text
-Verdict: UNVERIFIED
-Confidence: 0.20
+Verdict: FALSE
+Confidence: 1.00
 ```
 
 The retrieved evidence discusses diabetes management and hydration but does not directly establish that drinking lemon water cures diabetes.
@@ -528,14 +528,19 @@ Run:
 python -m app.llm.test_verifier
 ```
 
-The current test suite verifies:
+The current test suite verifies five scenarios:
 
 1. A supported health claim.
-2. A clearly false universal health claim.
-3. A partially true claim containing both supported and unsupported components.
-4. A claim for which the available evidence is insufficient.
 
-All four scenarios currently pass.
+2. A clearly false health claim.
+
+3. A partially true claim containing both supported and unsupported components.
+
+4. A claim explicitly contradicted by the available evidence.
+
+5. A claim for which the available evidence is insufficient.
+
+All five scenarios currently pass.
 
 ### Frontend Lint
 
