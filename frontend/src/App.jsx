@@ -4,7 +4,7 @@ import "./App.css";
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:8000/api/v1/claims/verify";
+  "http://127.0.0.1:8001/api/v1/claims/verify";
 
 const EXAMPLE_CLAIMS = [
   "Regular physical activity provides health benefits.",
@@ -370,6 +370,7 @@ function App() {
                       "Unknown source";
 
                     const content =
+                      item.snippet ||
                       item.content ||
                       item.text ||
                       metadata.content ||

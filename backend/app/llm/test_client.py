@@ -1,4 +1,4 @@
-from app.llm.client import generate_response
+from app.llm.client import LLM_PROVIDER, generate_response
 
 
 if __name__ == "__main__":
@@ -9,5 +9,5 @@ if __name__ == "__main__":
 
     response = generate_response(prompt)
 
-    print("\n--- OLLAMA RESPONSE ---")
+    print(f"\n--- {LLM_PROVIDER.upper()} RESPONSE ---")
     print(response)

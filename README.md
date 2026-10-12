@@ -45,7 +45,7 @@ The system:
 * Semantic similarity search
 * ChromaDB vector database
 * Sentence Transformer embeddings
-* Local Llama 3.1 LLM through Ollama
+* Configurable LLM providers: local Ollama or hosted Groq
 * FastAPI REST API
 * React frontend
 * Structured JSON verification responses
@@ -148,8 +148,8 @@ The system supports four verdict categories:
 
 ### AI / Machine Learning
 
-* Llama 3.1 8B
-* Ollama
+* Llama 3.1 8B (Ollama or Groq)
+* Ollama and Groq
 * Sentence Transformers
 * Hugging Face
 
@@ -411,19 +411,33 @@ pip install -r requirements.txt
 
 ## Environment Variables
 
-Create:
+Copy the template to create:
 
 ```text
 backend/.env
 ```
 
-Example:
+Choose a provider with `LLM_PROVIDER`.
+
+For local Ollama:
 
 ```env
+LLM_PROVIDER=ollama
 OLLAMA_URL=http://localhost:11434/api/generate
 OLLAMA_MODEL=llama3.1:8b
 OLLAMA_CONNECT_TIMEOUT=10
 OLLAMA_READ_TIMEOUT=300
+```
+
+For Groq:
+
+```env
+LLM_PROVIDER=groq
+GROQ_API_KEY=your_groq_api_key
+GROQ_URL=https://api.groq.com/openai/v1/chat/completions
+GROQ_MODEL=llama-3.1-8b-instant
+GROQ_CONNECT_TIMEOUT=10
+GROQ_READ_TIMEOUT=120
 ```
 
 Never commit `.env` to GitHub.
