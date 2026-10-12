@@ -17,8 +17,12 @@ TEST_CLAIMS = [
     },
     {
         "claim": "Drinking lemon water cures diabetes.",
-        "expected": "UNVERIFIED",
+        "expected": "FALSE",
     },
+{
+    "claim": "Drinking green tea improves memory in all adults.",
+    "expected": "UNVERIFIED",
+},
 ]
 
 

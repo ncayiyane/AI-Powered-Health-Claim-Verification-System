@@ -1,4 +1,3 @@
-
 Title: Diabetes Overview
 
 Source: World Health Organization
@@ -12,5 +11,7 @@ Diabetes is a chronic disease that occurs when the pancreas does not produce eno
 Type 2 diabetes is the most common form of diabetes and is influenced by factors including genetics, overweight and obesity, physical inactivity, and dietary and other environmental factors.
 
 Diabetes can be managed through lifestyle measures, medicines when appropriate, and regular monitoring of blood glucose levels.
+
+There is no evidence in this development document that drinking lemon water cures diabetes.
 
 Source organization: World Health Organization
