@@ -369,12 +369,20 @@ function App() {
                       metadata.source_organization ||
                       "Unknown source";
 
-                    const content =
+                    const rawContent =
                       item.snippet ||
                       item.content ||
                       item.text ||
                       metadata.content ||
                       "No evidence content available.";
+
+                    const content = rawContent
+                      .replace(/^Title:.*\r?\n?/gm, "")
+                      .replace(/^Source:.*\r?\n?/gm, "")
+                      .replace(/^Source URL:.*\r?\n?/gm, "")
+                      .replace(/^Topic:.*\r?\n?/gm, "")
+                      .replace(/^Source organization:.*\r?\n?/gm, "")
+                      .trim();
 
                     const sourceUrl =
                       item.source_url ||
