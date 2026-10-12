@@ -1,13 +1,17 @@
 Title: Hydration Overview
 
-Source: Development Health Reference
+Source: World Health Organization
+
+Source URL: https://www.who.int/publications/i/item/9789240015241
 
 Topic: Hydration
 
-Water is important for maintaining normal body functions and preventing dehydration.
+Water is essential for normal body functions.
 
-For most healthy people, drinking enough fluids throughout the day helps maintain normal hydration.
+Sufficient water intake is necessary to replace water losses and maintain normal water balance in the body.
 
-Drinking water is important for health, but drinking excessive amounts of water does not provide additional health benefits and can be harmful in extreme situations.
+Dehydration occurs when the body does not receive enough water to replace its losses and can have adverse health effects.
 
-Source organization: Development Health Reference
+Maintaining adequate hydration is important for health and well-being.
+
+Source organization: World Health Organization
